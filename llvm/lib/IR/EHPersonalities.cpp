@@ -18,6 +18,13 @@
 #include "llvm/TargetParser/Triple.h"
 using namespace llvm;
 
+static EHPersonality getFromSuffix(StringRef Name) {
+	if (Name.ends_with("msvc_cxx")) {
+		return EHPersonality::MSVC_CXX;
+	}
+	return EHPersonality::Unknown;
+}
+
 /// See if the given exception handling personality function is one that we
 /// understand.  If so, return a description of it; otherwise return Unknown.
 EHPersonality llvm::classifyEHPersonality(const Value *Pers) {
@@ -31,6 +38,10 @@ EHPersonality llvm::classifyEHPersonality(const Value *Pers) {
     // ARM64EC function symbols are mangled by prefixing them with "#".
     // Demangle them by skipping this prefix.
     Name.consume_front("#");
+  }
+
+  if (Name.starts_with("vrt_eh_personality_v0")) {
+  	return getFromSuffix(Name);
   }
 
   return StringSwitch<EHPersonality>(Name)
